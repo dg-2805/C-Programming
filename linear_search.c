@@ -28,7 +28,7 @@ int main() {
     return 0;
 }
 /*Sample Output
-nter the filename to open: i3.txt
+Enter the filename to open: i3.txt
 Enter the integer to search for: 5
 Found the key 5 in the file at index 404
 */
