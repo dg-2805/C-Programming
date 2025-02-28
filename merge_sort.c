@@ -136,3 +136,121 @@ Randomly generated elements: 639 236 858 934 178 548 834 433 456 826 644 670 596
 Sorted data has been written to output.txt
 Number of comparisons: 120364
 Time taken for sorting: 0.006000 seconds */
+
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int c = 0; // Global variable to count the number of comparisons
+double d = 0; // Global variable to calculate the average time complexity
+
+// Function to merge two subarrays
+void merge(int arr[], int left, int mid, int right) {
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+
+    int L[n1], R[n2];
+
+    for (int i = 0; i < n1; i++)
+        L[i] = arr[left + i];
+    for (int j = 0; j < n2; j++)
+        R[j] = arr[mid + 1 + j];
+
+    int i = 0, j = 0, k = left;
+    while (i < n1 && j < n2) {
+        c++; // Increment comparison counter
+        clock_t start = clock(); // Start time for comparison
+        if (L[i] <= R[j]) {
+            arr[k] = L[i];
+            i++;
+        } else {
+            arr[k] = R[j];
+            j++;
+        }
+        clock_t end = clock(); // End time for comparison
+        d += ((double)(end - start)) / CLOCKS_PER_SEC; // Add time taken for this comparison to d
+        k++;
+    }
+
+    while (i < n1) {
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
+
+    while (j < n2) {
+        arr[k] = R[j];
+        j++;
+        k++;
+    }
+}
+
+// Merge sort function
+void mergeSort(int arr[], int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+
+        mergeSort(arr, left, mid);
+        mergeSort(arr, mid + 1, right);
+
+        merge(arr, left, mid, right);
+    }
+}
+
+int main() {
+    int n;
+    printf("Enter the number of elements: ");
+    scanf("%d", &n);
+
+    int arr[n];
+    FILE *inputFile = fopen("input.txt", "w");
+    if (inputFile == NULL) {
+        perror("Error opening input file");
+        return 1;
+    }
+
+    srand(time(0));
+    for (int i = 0; i < n; i++) {
+        arr[i] = rand() % 1000; // Generating random numbers between 0 and 999
+        fprintf(inputFile, "%d\n", arr[i]);
+    }
+    fclose(inputFile);
+
+    inputFile = fopen("input.txt", "r");
+    if (inputFile == NULL) {
+        perror("Error opening input file for reading");
+        return 1;
+    }
+
+    for (int i = 0; i < n; i++)
+        fscanf(inputFile, "%d", &arr[i]);
+    fclose(inputFile);
+
+    clock_t start = clock(); // Start time
+    mergeSort(arr, 0, n - 1);
+    clock_t end = clock(); // End time
+
+    double time_taken = ((double)(end - start)) / CLOCKS_PER_SEC; // Calculate time taken
+
+    FILE *outputFile = fopen("output.txt", "w");
+    if (outputFile == NULL) {
+        perror("Error opening output file");
+        return 1;
+    }
+
+    for (int i = 0; i < n; i++)
+        fprintf(outputFile, "%d\n", arr[i]);
+    fclose(outputFile);
+
+    double average_time_complexity = d / c; // Calculate average time complexity
+
+    printf("Sorted data has been written to output.txt\n");
+    printf("Number of comparisons: %d\n", c);
+    printf("Time taken for sorting: %f seconds\n", time_taken);
+    printf("Average time complexity per comparison: %f seconds\n", average_time_complexity);
+
+    return 0;
+}
+
