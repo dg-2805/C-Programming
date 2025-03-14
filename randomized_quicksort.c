@@ -1,5 +1,3 @@
-/*Implement randomized Quick sort and compare its performance with the previous algorithm by testing average case running time. You should write a separate sub program to generate random permutation for 10 numbers (0 - 9), that has to be used as a sub-part of the complete program.
-*/
 #CODE
 #include <stdio.h>
 #include <stdlib.h>
