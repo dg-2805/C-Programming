@@ -1,4 +1,5 @@
-#CODE
+//Write a C program to analyze the performance of Randomized QuickSort by generating all permutations of an array of size n (≤10), storing them in an input file, sorting each using Randomized QuickSort, counting comparisons, and saving the sorted results in an output file. The program should print the number of comparisons for each permutation and compute the average comparisons across all permutations. The pivot must be chosen randomly during partitioning.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -130,8 +131,7 @@ int main() {
     return 0;
 }
 
-/*
-#OUTPUT
+/*#OUTPUT
 Input File:
 
 0 1 2 3 
@@ -186,8 +186,8 @@ Comparisons for permutation 23: 6
 Comparisons for permutation 24: 4
 Average comparisons: 4.92
 
-
 Output File:
+
 0 1 2 3 
 0 1 2 3 
 0 1 2 3 
