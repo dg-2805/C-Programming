@@ -144,26 +144,6 @@ void insert(skiplist *sl, int value) {
     printf("Value %d inserted. Comparisons: %d\n", value, c);
 }
 
-void deleteExtras(skiplist *sl) {
-    while (sl->head->d != NULL && sl->head->f->key == PLUS_INFINITY) {
-        node* old_left = sl->head;
-        node* old_right = sl->tail;
-
-        sl->head = old_left->d;
-        sl->tail = old_right->d;
-
-        if (sl->head)
-            sl->head->u = NULL;
-        if (sl->tail)
-            sl->tail->u = NULL;
-
-        free(old_left);
-        free(old_right);
-
-        sl->level--;
-    }
-}
-
 void deleteValue(skiplist *sl, int value) {
     c = 0;
     node *p = search(sl, value);
@@ -181,7 +161,24 @@ void deleteValue(skiplist *sl, int value) {
     }
     sl->size--; 
     printf("Value %d deleted. Comparisons: %d\n", value, c);
-    deleteExtras(sl);
+    
+    while (sl->head->d != NULL && sl->head->f->key == PLUS_INFINITY) {
+        node* old_left = sl->head;
+        node* old_right = sl->tail;
+
+        sl->head = old_left->d;
+        sl->tail = old_right->d;
+
+        if (sl->head)
+            sl->head->u = NULL;
+        if (sl->tail)
+            sl->tail->u = NULL;
+
+        free(old_left);
+        free(old_right);
+
+        sl->level--;
+    }
     
     if (sl->head->f != sl->tail) {
         addEmptyList(sl);
