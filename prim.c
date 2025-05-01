@@ -12,166 +12,261 @@ i  ∞ ∞ 2 ∞ ∞ ∞ 6 7 0
 */
 
 //graph.txt
-0 4 INF INF INF INF INF 8 INF
-4 0 8 INF INF INF INF 11 INF
-INF 8 0 7 INF 4 INF INF 2
-INF INF 7 0 9 14 INF INF INF
-INF INF INF 9 0 10 INF INF INF
-INF INF 4 14 10 0 2 INF INF
-INF INF INF INF INF 2 0 1 6
-8 11 INF INF INF INF 1 0 7
-INF INF 2 INF INF INF 6 7 0
+9
+0 1 4
+0 7 8
+1 2 8
+1 7 11
+2 3 7
+2 5 4
+2 8 2
+3 4 9
+3 5 14
+4 5 10
+5 6 2
+6 7 1
+6 8 6
+7 8 7
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <limits.h> 
+#include <time.h> 
+ 
+#define MAX_VERTICES 1000 
+ 
+typedef struct AdjListNode { 
+    int dest; 
+    int weight; 
+    struct AdjListNode* next; 
+} AdjListNode; 
+ 
+typedef struct AdjList { 
+    AdjListNode* head; 
+} AdjList; 
+ 
+typedef struct Graph { 
+    int V; 
+    AdjList* array; 
+} Graph; 
+ 
+typedef struct MinHeapNode { 
+    int v; 
+    int key; 
+} MinHeapNode; 
+ 
+typedef struct MinHeap { 
+    int size; 
+    int capacity; 
+    int* pos; 
+    MinHeapNode** array; 
+} MinHeap; 
+ 
+AdjListNode* newAdjListNode(int dest, int weight) { 
+    AdjListNode* newNode = (AdjListNode*) malloc(sizeof(AdjListNode)); 
+    newNode->dest = dest; 
+    newNode->weight = weight; 
+    newNode->next = NULL; 
+    return newNode; 
+} 
+ 
+Graph* createGraph(int V) { 
+    Graph* graph = (Graph*) malloc(sizeof(Graph)); 
+    graph->V = V; 
+    graph->array = (AdjList*) malloc(V * sizeof(AdjList)); 
+    for (int i = 0; i < V; ++i) 
+        graph->array[i].head = NULL; 
+    return graph; 
+} 
+void addEdge(Graph* graph, int src, int dest, int weight) { 
+    AdjListNode* newNode = newAdjListNode(dest, weight); 
+    newNode->next = graph->array[src].head; 
+    graph->array[src].head = newNode; 
+    newNode = newAdjListNode(src, weight); 
+    newNode->next = graph->array[dest].head; 
+    graph->array[dest].head = newNode; 
+} 
+ 
+MinHeapNode* newMinHeapNode(int v, int key) { 
+    MinHeapNode* minHeapNode = (MinHeapNode*) malloc(sizeof(MinHeapNode)); 
+    minHeapNode->v = v; 
+    minHeapNode->key = key; 
+    return minHeapNode; 
+} 
+ 
+MinHeap* createMinHeap(int capacity) { 
+    MinHeap* minHeap = (MinHeap*) malloc(sizeof(MinHeap)); 
+    minHeap->pos = (int*) malloc(capacity * sizeof(int)); 
+    minHeap->size = 0; 
+    minHeap->capacity = capacity; 
+    minHeap->array = (MinHeapNode**) malloc(capacity * sizeof(MinHeapNode*)); 
+    return minHeap; 
+} 
+ 
+void swapMinHeapNode(MinHeapNode** a, MinHeapNode** b) { 
+    MinHeapNode* t = *a; 
+    *a = *b; 
+    *b = t; 
+} 
+void minHeapify(MinHeap* minHeap, int idx) { 
+    int smallest = idx; 
+    int left = 2 * idx + 1; 
+    int right = 2 * idx + 2; 
+    if (left < minHeap->size && 
+        minHeap->array[left]->key < minHeap->array[smallest]->key) 
+        smallest = left; 
+    if (right < minHeap->size && 
+        minHeap->array[right]->key < minHeap->array[smallest]->key) 
+        smallest = right; 
+    if (smallest != idx) { 
+        MinHeapNode* smallestNode = minHeap->array[smallest]; 
+        MinHeapNode* idxNode = minHeap->array[idx]; 
+        minHeap->pos[smallestNode->v] = idx; 
+        minHeap->pos[idxNode->v] = smallest; 
+        swapMinHeapNode(&minHeap->array[smallest], &minHeap->array[idx]); 
+        minHeapify(minHeap, smallest); 
+    } 
+} 
+int isEmpty(MinHeap* minHeap) { 
+    return minHeap->size == 0; 
+} 
+MinHeapNode* extractMin(MinHeap* minHeap) { 
+    if (isEmpty(minHeap)) 
+        return NULL; 
+    MinHeapNode* root = minHeap->array[0]; 
+    MinHeapNode* lastNode = minHeap->array[minHeap->size - 1]; 
+    minHeap->array[0] = lastNode; 
+    minHeap->pos[root->v] = minHeap->size-1; 
+    minHeap->pos[lastNode->v] = 0; 
+    --minHeap->size; 
+    minHeapify(minHeap, 0); 
+    return root; 
+} 
+ 
+void decreaseKey(MinHeap* minHeap, int v, int key) { 
+    int i = minHeap->pos[v]; 
+    minHeap->array[i]->key = key; 
+    while (i && minHeap->array[i]->key < minHeap->array[(i-1)/2]->key) { 
+        minHeap->pos[minHeap->array[i]->v] = (i-1)/2; 
+        minHeap->pos[minHeap->array[(i-1)/2]->v] = i; 
+        swapMinHeapNode(&minHeap->array[i], &minHeap->array[(i-1)/2]); 
+        i = (i-1)/2; 
+    } 
+} 
+int isInMinHeap(MinHeap *minHeap, int v) { 
+    if (minHeap->pos[v] < minHeap->size) 
+        return 1; 
+    return 0; 
+} 
+void PrimMST(Graph* graph) { 
+    int V = graph->V; 
+    int parent[V]; 
+    int key[V]; 
+    MinHeap* minHeap = createMinHeap(V); 
+    for (int v = 0; v < V; ++v) { 
+        parent[v] = -1; 
+        key[v] = INT_MAX; 
+        minHeap->array[v] = newMinHeapNode(v, key[v]); 
+        minHeap->pos[v] = v; 
+    } 
+    srand(time(NULL)); 
+    int src = rand() % V; 
+    printf("Random starting vertex: %d\n", src); 
+    minHeap->array[src] = newMinHeapNode(src, key[src]); 
+    minHeap->pos[src] = src; 
+    key[src] = 0; 
+    decreaseKey(minHeap, src, key[src]); 
+    minHeap->size = V; 
+    while (!isEmpty(minHeap)) { 
+        MinHeapNode* minHeapNode = extractMin(minHeap); 
+        int u = minHeapNode->v; 
+        AdjListNode* pCrawl = graph->array[u].head; 
+        while (pCrawl != NULL) { 
+            int v = pCrawl->dest; 
+            if (isInMinHeap(minHeap, v) && pCrawl->weight < key[v]) { 
+                key[v] = pCrawl->weight; 
+                parent[v] = u; 
+                decreaseKey(minHeap, v, key[v]); 
+            } 
+            pCrawl = pCrawl->next; 
+        } 
+    } 
+    printf("Edge \tWeight\n"); 
+    int totalWeight = 0; 
+    for (int i = 0; i < V; ++i) { 
+        if (parent[i] != -1) { 
+            printf("%d - %d\t%d\n", parent[i], i, key[i]); 
+            totalWeight += key[i]; 
+        } 
+    } 
+    printf("Total MST Weight: %d\n", totalWeight); 
+} 
+Graph* readGraphFromFile(const char* filename) { 
+    FILE* file = fopen(filename, "r"); 
+    if (!file) { 
+        printf("Error opening file.\n"); 
+        exit(1); 
+    } 
+    int V; 
+    fscanf(file, "%d", &V); 
+    Graph* graph = createGraph(V); 
+    int src, dest, weight; 
+    while (fscanf(file, "%d %d %d", &src, &dest, &weight) == 3) { 
+        addEdge(graph, src, dest, weight); 
+} 
+} 
+fclose(file); 
+return graph; 
+int main() { 
+Graph* graph = readGraphFromFile("graph.txt"); 
+PrimMST(graph); 
+return 0; 
+} 
 
-#define V 9
-#define INF INT_MAX
-
-typedef struct {
-    int vertex;
-    int key;
-} MinHeapNode;
-
-typedef struct {
-    MinHeapNode *array;
-    int *pos;
-    int size;
-} MinHeap;
-
-MinHeap* createMinHeap(int capacity) {
-    MinHeap *heap = (MinHeap*)malloc(sizeof(MinHeap));
-    heap->pos = (int*)malloc(V * sizeof(int));
-    heap->size = capacity;
-    heap->array = (MinHeapNode*)malloc(V * sizeof(MinHeapNode));
-    return heap;
-}
-
-void swapMinHeapNode(MinHeapNode *a, MinHeapNode *b) {
-    MinHeapNode t = *a;
-    *a = *b;
-    *b = t;
-}
-
-void minHeapify(MinHeap *heap, int idx) {
-    int smallest = idx;
-    int left = 2*idx + 1;
-    int right = 2*idx + 2;
-
-    if (left < heap->size && heap->array[left].key < heap->array[smallest].key)
-        smallest = left;
-
-    if (right < heap->size && heap->array[right].key < heap->array[smallest].key)
-        smallest = right;
-
-    if (smallest != idx) {
-        MinHeapNode smallestNode = heap->array[smallest];
-        MinHeapNode idxNode = heap->array[idx];
-
-        heap->pos[smallestNode.vertex] = idx;
-        heap->pos[idxNode.vertex] = smallest;
-
-        swapMinHeapNode(&heap->array[smallest], &heap->array[idx]);
-        minHeapify(heap, smallest);
-    }
-}
-
-int isInMinHeap(MinHeap *heap, int v) {
-    return heap->pos[v] < heap->size;
-}
-
-MinHeapNode extractMin(MinHeap *heap) {
-    if (heap->size == 0) return (MinHeapNode){-1, -1};
-
-    MinHeapNode root = heap->array[0];
-    MinHeapNode lastNode = heap->array[heap->size - 1];
-    heap->array[0] = lastNode;
-
-    heap->pos[root.vertex] = heap->size - 1;
-    heap->pos[lastNode.vertex] = 0;
-
-    heap->size--;
-    minHeapify(heap, 0);
-
-    return root;
-}
-
-void decreaseKey(MinHeap *heap, int v, int key) {
-    int i = heap->pos[v];
-    heap->array[i].key = key;
-
-    while (i && heap->array[i].key < heap->array[(i - 1)/2].key) {
-        heap->pos[heap->array[i].vertex] = (i - 1)/2;
-        heap->pos[heap->array[(i - 1)/2].vertex] = i;
-        swapMinHeapNode(&heap->array[i], &heap->array[(i - 1)/2]);
-        i = (i - 1)/2;
-    }
-}
-
-void primMST(int graph[V][V]) {
-    int parent[V];
-    int key[V];
-    MinHeap *heap = createMinHeap(V);
-
-    for (int v = 0; v < V; v++) {
-        parent[v] = -1;
-        key[v] = INF;
-        heap->array[v].vertex = v;
-        heap->array[v].key = key[v];
-        heap->pos[v] = v;
-    }
-
-    key[0] = 0;
-    heap->array[0].key = 0;
-
-    while (heap->size > 0) {
-        MinHeapNode minNode = extractMin(heap);
-        int u = minNode.vertex;
-
-        for (int v = 0; v < V; v++) {
-            if (graph[u][v] && graph[u][v] != INF && isInMinHeap(heap, v) && graph[u][v] < key[v]) {
-                key[v] = graph[u][v];
-                parent[v] = u;
-                decreaseKey(heap, v, key[v]);
-            }
-        }
-    }
-
-    printf("Edge \tWeight\n");
-    for (int i = 1; i < V; i++)
-        printf("%c - %c \t%d\n", parent[i] + 'a', i + 'a', graph[i][parent[i]]);
-}
-
-int main() {
-    FILE *fp = fopen("graph.txt", "r");
-    if (!fp) {
-        printf("File not found!\n");
-        return 1;
-    }
-
-    int graph[V][V];
-    char word[10];
-    for (int i = 0; i < V; i++) {
-        for (int j = 0; j < V; j++) {
-            fscanf(fp, "%s", word);
-            if (word[0] == 'I') graph[i][j] = INF;
-            else graph[i][j] = atoi(word);
-        }
-    }
-
-    fclose(fp);
-    primMST(graph);
-    return 0;
-}
-/* OUTPUT
-Edge    Weight
-a - b   4
-f - c   4
-c - d   7
-d - e   9
-g - f   2
-h - g   1
-a - h   8
-c - i   2
-*/
+/*
+#OUTPUT 
+Random starting vertex: 4 
+Edge    Weight 
+1 - 0   4 
+2 - 1   8 
+3 - 2   7 
+4 - 3   9 
+2 - 5   4 
+5 - 6   2 
+6 - 7   1 
+2 - 8   2 
+Total MST Weight: 37 
+Random starting vertex: 2 
+Edge    Weight 
+7 - 0   8 
+0 - 1   4 
+2 - 3   7 
+3 - 4   9 
+2 - 5   4 
+5 - 6   2 
+6 - 7   1 
+2 - 8   2 
+Total MST Weight: 37 
+Random starting vertex: 8 
+Edge    Weight 
+7 - 0   8 
+0 - 1   4 
+8 - 2   2 
+2 - 3   7 
+3 - 4   9 
+2 - 5   4 
+5 - 6   2 
+6 - 7   1 
+Total MST Weight: 37 
+Random starting vertex: 0 
+Edge    Weight 
+0 - 1   4 
+5 - 2   4 
+2 - 3   7 
+3 - 4   9 
+6 - 5   2 
+7 - 6   1 
+0 - 7   8 
+2 - 8   2 
+Total MST Weight: 37
+   */
