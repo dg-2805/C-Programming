@@ -172,7 +172,7 @@ int main(){
     return 0;
 }
 
-#INPUT
+/* #INPUT
 9
 0 1 4
 0 7 8
@@ -201,3 +201,4 @@ Vertices    Weight
 0 - 7           8
 3 - 4           9
 Total weight of MST: 37
+*/
